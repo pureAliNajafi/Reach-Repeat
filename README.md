@@ -13,5 +13,5 @@ Except now, the distance to the top is longer than before —
 psychological warfare
 
 [🎥 Watch Gameplay Demo](https://github.com/pureAliNajafi/Reach-Repeat/raw/main/game.mp4)
-[🕹 Play the Game here](https://rawcdn.githack.com/pureAliNajafi/Reach-Repeat/refs/heads/main/game.htm)
+   [🕹 Play the Game](https://rawcdn.githack.com/pureAliNajafi/Reach-Repeat/refs/heads/main/game.htm)
 
