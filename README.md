@@ -11,3 +11,7 @@ It's a 💻 game, You use the arrow keys to move between falling blocks and reac
 But when you finally make it… the game resets.
 Except now, the distance to the top is longer than before —
 psychological warfare
+
+[🎥 Watch Gameplay Demo](https://github.com/pureAliNajafi/Reach-Repeat/raw/main/game.mp4)
+
+
