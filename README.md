@@ -9,7 +9,7 @@ Just <script> tags and divine suffering — exactly as God intended.
 ## 🎮 About the Game
 It's a 💻 game, You use the arrow keys to move between falling blocks and reach the top.
 But when you finally make it… the game resets.
-Except now, the distance to the top is longer than before 
+Except now, the distance to the top is longer than before.
 
 [🎥 Watch Gameplay Demo](https://github.com/pureAliNajafi/Reach-Repeat/raw/main/game.mp4)
    [🕹 Play the Game](https://rawcdn.githack.com/pureAliNajafi/Reach-Repeat/refs/heads/main/game.htm)
