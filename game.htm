@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Game</title>
+
+    <style>
+      html,
+      body {
+        height: 100%;
+        padding: 0;
+        margin: 0;
+      }
+      body {
+        background-color: #1d6f84;
+      }
+      body main {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #ground {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-height: 80svh;
+        overflow-y: scroll;
+      }
+      #ground > div {
+        display: flex;
+        gap: 4px;
+      }
+      #ground span {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+      }
+
+      .obsticle {
+        background-color: #e8b70a;
+      }
+      .empty {
+        background-color: #ccc;
+      }
+      .current {
+        background-color: rgb(211, 22, 72);
+      }
+      .prev-hitted-obsticle {
+        background-color: rgb(26, 171, 60);
+      }
+      .current-hitted-obsticle {
+        background-color: #1d6f84;
+      }
+      .current-reached-top {
+        background-color: #1edb4a;
+      }
+
+      /* For Chrome, Safari, and Edge */
+      .scroll-hidden::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* For Firefox */
+      .scroll-hidden {
+        scrollbar-width: none; /* Firefox */
+      }
+
+      /* Common style */
+      .scroll-hidden {
+        overflow: auto; /* or scroll or overflow-y: scroll */
+      }
+      .score-board {
+        width: 300px;
+        height: 5svh;
+        font-size: 3svh;
+        font-weight: bold;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+      }
+      .score-board span {
+        color: #e8b70a;
+        font-size: x-large;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="score-board">
+        <div>Score: <span id="score">0</span></div>
+        <div>Highest: <span id="highest">0</span></div>
+      </div>
+      <div id="ground" class="scroll-hidden"></div>
+    </main>
+    <script>
+      // ========= Constants and Initial State =========
+      const direction = {
+        ArrowUp: [-1, 0],
+        ArrowRight: [0, +1],
+        ArrowDown: [+1, 0],
+        ArrowLeft: [0, -1],
+      };
+
+      const width = 7;
+      const height = 10;
+
+      const scoreElement = document.getElementById("score");
+      const highestElement = document.getElementById("highest");
+      const ground = document.getElementById("ground");
+
+      let score = 0;
+      let highestScore = localStorage.getItem("highestScore");
+      if (!highestScore) {
+        highestScore = 0;
+        localStorage.setItem("highestScore", 0);
+      }
+      highestElement.innerHTML = highestScore;
+
+      let array = new Array(height).fill(new Array(width).fill(0));
+      const newRows = new Array(3).fill(new Array(width).fill(0));
+      let rowsElements = [];
+
+      const initialLocation = [height - 1, (width / 2) | 0];
+      let currentLocation = [...initialLocation];
+
+      let start = false;
+      let myGameIntervalID;
+
+      ground.style.filter = "blur(6px) grayscale(0.8)";
+
+      // ========= Utilities =========
+      const isOutside = ([row, col]) => array[row] === undefined || array[row][col] === undefined;
+
+      const hasHitObstacle = ([row, col]) => array[row][col] === 1;
+
+      const getCellElement = ([row, col]) =>
+        document.querySelector(`main #ground div:nth-child(${row + 1}) span:nth-child(${col + 1})`);
+
+      const generateCell = (cell, i, j) => {
+        const cellElement = document.createElement("span");
+        cellElement.className =
+          currentLocation[0] === i && currentLocation[1] === j
+            ? "current"
+            : cell === 1
+            ? "obsticle"
+            : "empty";
+        return cellElement;
+      };
+
+      const newRowGenerator = () => {
+        const oldRow = [...array[0]];
+        const newRow = array[height - 1].map(() => 1);
+        const openIndices = [];
+
+        oldRow.forEach((cell, i) => {
+          if (cell === 0) openIndices.push(i);
+        });
+
+        const pointer = openIndices[(Math.random() * openIndices.length) | 0];
+        const seek = (Math.random() * width) | 0;
+
+        const [start, end] = pointer <= seek ? [pointer, seek] : [seek, pointer];
+        for (let i = start; i <= end; i++) newRow[i] = 0;
+
+        return newRow;
+      };
+
+      const updateScoreBoard = () => {
+        score++;
+        scoreElement.innerHTML = score;
+        if (score > highestScore) {
+          highestElement.innerHTML = score;
+          localStorage.setItem("highestScore", score);
+        }
+      };
+
+      const scrollToTargetElement = (element) => {
+        const elementBottom = element.offsetTop + element.offsetHeight;
+        const scrollTopTarget = elementBottom - ground.clientHeight;
+
+        ground.scrollTo({
+          top: scrollTopTarget,
+          behavior: "smooth",
+        });
+      };
+
+      // ========= Game Control =========
+      const stopGame = () => {
+        clearInterval(myGameIntervalID);
+        document.removeEventListener("keydown", locationChanger);
+        getCellElement(currentLocation).className = "current-hitted-obsticle";
+
+        setTimeout(() => {
+          if (confirm("Do you want to restart?")) {
+            location.reload();
+          }
+        });
+      };
+
+      const handleTopReach = () => {
+        let currentCellElement = getCellElement(currentLocation);
+        currentCellElement.className = "current-reached-top";
+
+        setTimeout(() => {
+          currentCellElement.className = "empty";
+
+          array = array.concat(newRows);
+          const newCurrentLocation = [(initialLocation[0] += 3), initialLocation[1]];
+          currentLocation = newCurrentLocation;
+          shiftDown();
+
+          currentCellElement = getCellElement(currentLocation);
+          currentCellElement.className = "current";
+          scrollToTargetElement(currentCellElement);
+        }, 100);
+
+        updateScoreBoard();
+      };
+
+      const shiftDown = () => {
+        array = array.map((_, i, arr) => (i === 0 ? newRowGenerator() : arr[i - 1]));
+        groundUpdate();
+      };
+
+      const groundUpdate = () => {
+        ground.innerHTML = "";
+
+        if (!start) {
+          start = array[height - 4].some((cell) => cell === 1);
+        }
+
+        if (start) {
+          ground.style.filter = "none";
+          updateInterval(750);
+        }
+
+        array.forEach((row, i) => {
+          rowsElements[i] = document.createElement("div");
+          row.forEach((cell, j) => {
+            rowsElements[i].appendChild(generateCell(cell, i, j));
+          });
+          ground.appendChild(rowsElements[i]);
+        });
+
+        if (hasHitObstacle(currentLocation)) {
+          stopGame();
+        }
+      };
+
+      const locationChanger = (e) => {
+        if (!start) return;
+
+        const [dRow, dCol] = direction[e.key] ?? [];
+        if (dRow === undefined) return;
+
+        const tempLocation = [currentLocation[0] + dRow, currentLocation[1] + dCol];
+        if (isOutside(tempLocation)) return;
+
+        getCellElement(currentLocation).className = "empty";
+        currentLocation = tempLocation;
+
+        const currentCell = getCellElement(currentLocation);
+        currentCell.className = "current";
+        scrollToTargetElement(currentCell);
+
+        if (hasHitObstacle(currentLocation)) {
+          stopGame();
+          return;
+        }
+
+        if (currentLocation[0] === 0) {
+          handleTopReach();
+        }
+      };
+
+      // ========= Interval Management =========
+      const startInterval = (time) => {
+        clearInterval(myGameIntervalID);
+        myGameIntervalID = setInterval(shiftDown, time);
+      };
+
+      const updateInterval = (newTime) => {
+        startInterval(newTime);
+      };
+
+      // ========= Event Bindings =========
+      document.addEventListener("keydown", locationChanger);
+      startInterval(200);
+    </script>
+  </body>
+</html>
