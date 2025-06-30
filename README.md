@@ -1,4 +1,4 @@
-# Reach-Repeat
+# Reach & Repeat
 
 ## 💀 HTML Game: Pain Edition
 I wrote this during an internet blackout in Iran because I was bored out of my mind.
